@@ -5,7 +5,15 @@ __pycache__/
 config.ini
 # C extensions
 *.so
-
+backports
+bin
+certifi*
+char*
+config*
+idna*
+urlib3*
+requests*
+*lib*
 # Distribution / packaging
 .Python
 build/

@@ -23,7 +23,7 @@ strCSPProdURL   = config.get("vmcConfig", "strCSPProdURL")
 Refresh_Token   = config.get("vmcConfig", "refresh_Token")
 ORG_ID          = config.get("vmcConfig", "org_id")
 SDDC_ID         = config.get("vmcConfig", "sddc_id")
-expected_host   = config.get("vmcConfig", "expected_hosts")
+expected_host   = config.get("vmcConfig", "expected_host")
 current_hosts   = 0
 
 
@@ -65,7 +65,7 @@ def removeCDChosts(hosts, org_id, sddc_id, sessiontoken):
     print(response)
     return
 
-def toreducehosts(current_hosts, expected_host)
+def toreducehosts(current_hosts, expected_host):
     to_reduce = current_hosts - expected_hosts
 
     print(str(to_reduce) + " has to be remove")
