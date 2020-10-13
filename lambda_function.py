@@ -29,6 +29,7 @@ expected_host   = config.get("vmcConfig", "expected_host")
 
 print("The SDDC " + str(SDDC_ID) + " in the " + str(ORG_ID) + " ORG will be scaled down.")
 
+
 def getAccessToken(myKey):
     params = {'refresh_token': myKey}
     headers = {'Content-Type': 'application/json'}
@@ -37,9 +38,9 @@ def getAccessToken(myKey):
     access_token = jsonResponse['access_token']
     return access_token
 
-def getSDDCS(tenantid, sessiontoken):           # get current hostcount and return it
+def getSDDCS(ord_id, sddc_id, sessiontoken):           # get current hostcount and return it
     myHeader = {'csp-auth-token': sessiontoken}
-    myURL = strProdURL + "/vmc/api/orgs/" + tenantid + "/sddcs"
+    myURL = strProdURL + "/vmc/api/orgs/" + org_id + "/sddcs/" + sddc_id
     response = requests.get(myURL, headers=myHeader)
     jsonResponse = response.json()
     orgtable = PrettyTable(['OrgID'])
@@ -48,7 +49,7 @@ def getSDDCS(tenantid, sessiontoken):           # get current hostcount and retu
     table = PrettyTable(['Name', 'Cloud', 'Status', 'Hosts', 'ID'])
     for i in jsonResponse:
         hostcount = 0
-        myURL = strProdURL + "/vmc/api/orgs/" + tenantid + "/sddcs/" + i['id']
+        myURL = strProdURL + "/vmc/api/orgs/" + org_id + "/sddcs/" + sddc_id
         response = requests.get(myURL, headers=myHeader)
         mySDDCs = response.json()
         if mySDDCs['resource_config']:
@@ -56,7 +57,6 @@ def getSDDCS(tenantid, sessiontoken):           # get current hostcount and retu
             if hosts:
                 for j in hosts:
                     hostcount = hostcount + 1
-        table.add_row([i['name'], i['provider'],i['sddc_state'], hostcount, i['id']])
     return hostcount
 
 def toreducehosts(hostcount, expected_host):    # hostcount - expected_hosts
@@ -74,13 +74,12 @@ def removeCDChosts(to_reduce, org_id, sddc_id, sessiontoken):     #reduce hosts
     print(response)
     return
 
-
 # --------------------------------------------
 # ---------------- Main ----------------------
 # --------------------------------------------
 
 def lambda_handler(event, context):
     session_token = getAccessToken(Refresh_Token)
-    hostcount = getSDDCS()
+    hostcount = getSDDCS(ORG_ID, session_token)
     removeCDChosts(to_reduce, ORG_ID, SDDC_ID, session_token)
     return
