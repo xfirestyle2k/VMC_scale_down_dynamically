@@ -59,8 +59,8 @@ def getSDDCS(tenantid, sessiontoken):           # get current hostcount and retu
         table.add_row([i['name'], i['provider'],i['sddc_state'], hostcount, i['id']])
     return hostcount
 
-def toreducehosts(hostcount, expected_host):
-    to_reduce = hostcount - expected_hosts
+def toreducehosts(hostcount, expected_host):    # hostcount - expected_hosts
+    to_reduce = hostcount - expected_host
 
     print(str(to_reduce) + " has to be remove")
     return to_reduce
