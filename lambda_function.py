@@ -2,6 +2,7 @@
 
 Scheduled Auto-Scale for VMware Cloud on AWS
 
+
 You can install python 3.6 from https://www.python.org/downloads/windows/
 
 You can install the dependent python packages locally (handy for Lambda) with:
@@ -14,9 +15,6 @@ import requests                         # need this for Get/Post/Delete
 import configparser                     # parsing config file
 import time
 import json
-from prettytable import PrettyTable
-
-
 
 config = configparser.ConfigParser()
 config.read("./config.ini")
@@ -25,12 +23,11 @@ strCSPProdURL   = config.get("vmcConfig", "strCSPProdURL")
 Refresh_Token   = config.get("vmcConfig", "refresh_Token")
 ORG_ID          = config.get("vmcConfig", "org_id")
 SDDC_ID         = config.get("vmcConfig", "sddc_id")
-expected_host   = config.get("vmcConfig", "expected_host")
-to_reduced_host = 0
+expected_host   = config.get("vmcConfig", "expected_hosts")
+current_hosts   = 0
 
 
-
-#print("The SDDC " + str(SDDC_ID) + " in the " + str(ORG_ID) + " ORG will be scaled down.")
+print("The SDDC " + str(SDDC_ID) + " in the " + str(ORG_ID) + " ORG will be scaled down.")
 
 def getAccessToken(myKey):
     params = {'refresh_token': myKey}
@@ -40,46 +37,39 @@ def getAccessToken(myKey):
     access_token = jsonResponse['access_token']
     return access_token
 
-#-------------------- Show hosts in an SDDC
-def getCDChosts(sddcID, tenantid, sessiontoken):
-
+def getSDDCS(current_hosts, tenantid, sessiontoken):
     myHeader = {'csp-auth-token': sessiontoken}
-    myURL = strProdURL + "/vmc/api/orgs/" + tenantid + "/sddcs/" + sddcID
-
+    myURL = strProdURL + "/vmc/api/orgs/" + tenantid + "/sddcs"
     response = requests.get(myURL, headers=myHeader)
-
-    # grab the names of the CDCs
     jsonResponse = response.json()
+    table = PrettyTable(['Name', 'Cloud', 'Status', 'Hosts', 'ID'])
+    for i in jsonResponse:
+        current_hosts = 0
+        myURL = strProdURL + "/vmc/api/orgs/" + tenantid + "/sddcs/" + i['id']
+        response = requests.get(myURL, headers=myHeader)
+        mySDDCs = response.json()
+        if mySDDCs['resource_config']:
+            current_hosts = mySDDCs['resource_config']['esx_hosts']
+            if current_hosts:
+                for j in current_hosts:
+                    current_hosts = hostcount + 1
 
-    # get the vC block (this is a bad hack to get the rest of the host name
-    # shown in vC inventory)
-    cdcID = jsonResponse['resource_config']['vc_ip']
-    cdcID = cdcID.split("vcenter")
-    cdcID = cdcID[1]
-    cdcID = cdcID.split("/")
-    cdcID = cdcID[0]
+    return current_hosts
 
-    # get the hosts block
-    hosts = jsonResponse['resource_config']['esx_hosts']
-    table = PrettyTable(['Name', 'Status', 'ID'])
-    for i in hosts:
-        hostName = i['name'] + cdcID
-        table.add_row([hostName, i['esx_state'], i['esx_id']])
-    print(table)
+def removeCDChosts(hosts, org_id, sddc_id, sessiontoken):
+    myHeader = {'csp-auth-token': sessiontoken}
+    myURL = strProdURL + "/vmc/api/orgs/" + org_id + "/sddcs/" + sddc_id + "/esxs"
+    strRequest = {"num_hosts": hosts}
+    response = requests.delete(myURL, json=strRequest, headers=myHeader)
+    print(str(hosts) + " host(s) have been removed to the SDDC")
+    print(response)
     return
-#print ("Hosts are in the cluster: " + str(esx_hosts))
 
+def toreducehosts(current_hosts, expected_host)
+    to_reduce = current_hosts - expected_hosts
 
-#def removeCDChosts(hosts, org_id, sddc_id, sessiontoken):
-#    myHeader = {'csp-auth-token': sessiontoken}
-#    myURL = strProdURL + "/vmc/api/orgs/" + org_id + "/sddcs/" + sddc_id + "/esxs"
-#    strRequest = {"num_hosts": hosts}
-#    response = requests.delete(myURL, json=strRequest, headers=myHeader)
-#    print(str(hosts) + " host(s) have been removed to the SDDC")
-#    print(response)
-#    return
-
-
+    print(str(to_reduce) + " has to be remove")
+    return to_reduce
 
 
 # --------------------------------------------
@@ -88,5 +78,6 @@ def getCDChosts(sddcID, tenantid, sessiontoken):
 
 def lambda_handler(event, context):
     session_token = getAccessToken(Refresh_Token)
-    getCDChosts(sddc_ID, refresh_token, sessiontoken)
+    current_hosts = getSDDCS(current_hosts)
+    removeCDChosts(to_reduce, ORG_ID, SDDC_ID, session_token)
     return
