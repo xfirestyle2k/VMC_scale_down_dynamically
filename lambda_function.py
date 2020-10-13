@@ -37,7 +37,7 @@ def getAccessToken(myKey):
     access_token = jsonResponse['access_token']
     return access_token
 
-def getSDDCS(tenantid, sessiontoken):
+def getSDDCS(tenantid, sessiontoken):           # get current hostcount and return it
     myHeader = {'csp-auth-token': sessiontoken}
     myURL = strProdURL + "/vmc/api/orgs/" + tenantid + "/sddcs"
     response = requests.get(myURL, headers=myHeader)
@@ -59,7 +59,13 @@ def getSDDCS(tenantid, sessiontoken):
         table.add_row([i['name'], i['provider'],i['sddc_state'], hostcount, i['id']])
     return hostcount
 
-def removeCDChosts(hosts, org_id, sddc_id, sessiontoken):
+def toreducehosts(hostcount, expected_host):
+    to_reduce = hostcount - expected_hosts
+
+    print(str(to_reduce) + " has to be remove")
+    return to_reduce
+
+def removeCDChosts(hosts, org_id, sddc_id, sessiontoken):     #reduce hosts
     myHeader = {'csp-auth-token': sessiontoken}
     myURL = strProdURL + "/vmc/api/orgs/" + org_id + "/sddcs/" + sddc_id + "/esxs"
     strRequest = {"num_hosts": hosts}
@@ -67,12 +73,6 @@ def removeCDChosts(hosts, org_id, sddc_id, sessiontoken):
     print(str(hosts) + " host(s) have been removed to the SDDC")
     print(response)
     return
-
-def toreducehosts(hostcount, expected_host):
-    to_reduce = hostcount - expected_hosts
-
-    print(str(to_reduce) + " has to be remove")
-    return to_reduce
 
 
 # --------------------------------------------
