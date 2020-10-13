@@ -65,12 +65,12 @@ def toreducehosts(hostcount, expected_host):
     print(str(to_reduce) + " has to be remove")
     return to_reduce
 
-def removeCDChosts(hosts, org_id, sddc_id, sessiontoken):     #reduce hosts
+def removeCDChosts(to_reduce, org_id, sddc_id, sessiontoken):     #reduce hosts
     myHeader = {'csp-auth-token': sessiontoken}
     myURL = strProdURL + "/vmc/api/orgs/" + org_id + "/sddcs/" + sddc_id + "/esxs"
-    strRequest = {"num_hosts": hosts}
+    strRequest = {"num_hosts": to_reduce}
     response = requests.delete(myURL, json=strRequest, headers=myHeader)
-    print(str(hosts) + " host(s) have been removed to the SDDC")
+    print(str(to_reduce) + " host(s) have been removed to the SDDC")
     print(response)
     return
 
